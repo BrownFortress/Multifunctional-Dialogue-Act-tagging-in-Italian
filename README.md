@@ -1,2 +1,2 @@
 # Multifunctional-Dialogue-Act-tagging-in-Italian
-Multifunctional ISO 24617-2 Dialogue Act tagging in Italian
+This repository will contain the resources and the code of the paper "Multifunctional ISO standard Dialogue Act tagging in Italian". 
