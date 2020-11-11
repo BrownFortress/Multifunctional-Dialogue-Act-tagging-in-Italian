@@ -13,7 +13,7 @@ This repository contains a dialogue act tagger based on SVM and CNN model.
 - (optional) plotly for charts
 
 ### Getting Started
-### Set up datasets
+#### Set up datasets
 The first step is to copy in the "datasets/" folder the "iLISTEN.json" and "iLISTEN2ISO.json" datasets that can be obtained in the "resource/" folder.
 #### SVM model
 To train an SVM model run **svm_train.py**:
