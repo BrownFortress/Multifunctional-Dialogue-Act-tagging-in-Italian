@@ -6,7 +6,7 @@ Then, to apply the ISO standard annotation to iLISTEN corpus, you have to run th
 ```bash
 python generate_iLISTEN2ISO.py
 ```   
-The new resource is saved in the *datasets* folder as **iLISTEN2ISO.json**
+The new resource is saved in the *datasets* folder as **iLISTEN2ISO.json**. Furthermore, also the file **iLISTEN.json** is yielded with the same structure of iLISTEN2ISO. 
 
 ## Annotation structure
 The annotation is organized as follows:
