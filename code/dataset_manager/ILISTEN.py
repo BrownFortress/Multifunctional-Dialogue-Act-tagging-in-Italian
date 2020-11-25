@@ -1,6 +1,5 @@
 import os
 import xml.etree.ElementTree as ET
-import pandas as pd
 from dataset_manager.data_preprocessing import DataPreprocessing
 import re
 import logging

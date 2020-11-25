@@ -2,7 +2,6 @@ from svm.svm_trainer import SVM_trainer
 import os
 import sys
 import pprint
-from tqdm import tqdm
 import argparse
 from datetime import datetime
 

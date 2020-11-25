@@ -5,6 +5,7 @@ import spacy
 from itertools import groupby
 import numpy as np
 from dataset_manager.data_preprocessing import DataPreprocessing
+
 class DatasetAnalysis():
     def __init__(self):
         pass

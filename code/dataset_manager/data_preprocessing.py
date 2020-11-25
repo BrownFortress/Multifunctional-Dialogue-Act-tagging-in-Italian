@@ -1,4 +1,3 @@
-import pandas as pd
 import spacy
 from dataset_manager.wordrepresentation import WordRepresentation
 import numpy as np

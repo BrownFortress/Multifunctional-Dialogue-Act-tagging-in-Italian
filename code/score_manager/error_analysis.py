@@ -8,7 +8,6 @@ import sys
 import json
 from dataset_manager.data_preprocessing import DataPreprocessing
 from dataset_manager.dataset_analysis import DatasetAnalysis
-import plotly.graph_objects as go
 import pprint
 
 class ErrorAnalysis():
@@ -169,6 +168,3 @@ class ErrorAnalysis():
             f1_classes[xy_labels[id]] = f1s[-1]
 
         return f1_classes, recall_classes, precision_classes
-
-
-    

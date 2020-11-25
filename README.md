@@ -3,6 +3,8 @@ The task of Dialogue Act (DA) tagging, a crucial component in many conversationa
 
 
 ## Organization
-- *code*: this folder contains the models used to achieve the resutls proposed in the paper.
-- *resource*: this folder contains the mapping from iLISTEN to iLISTEN2ISO.
-- *paper*: Multifunctional ISO standard Dialogue Act tagging in Italian.pdf
+- **code**: this folder contains the models used to achieve the resutls proposed in the paper.
+- **resource**: this folder contains the mapping from iLISTEN to iLISTEN2ISO.
+- **paper**: Multifunctional ISO standard Dialogue Act tagging in Italian.pdf
+
+In order to run the code, you need the resources. Thus first visit the **resource** folder and then please go to the **code** folder.

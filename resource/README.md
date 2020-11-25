@@ -1,12 +1,12 @@
 # iLISTEN2ISO
 This repository contains a new resource for dialogue act tagging in Italian. In practice, it contains the annotation needed to map iLISTEN corpus to the new ISO 2461-2 schema.
 To get the complete corpus annotated with the new schema, you have to download the original corpus from here:
-https://github.com/evalita2018/data. After that, you have to move the folder called *iLISTEN* into the project folder called *datasets*.
+https://github.com/evalita2018/data. After that, you have to move the folder called *ILISTEN* into the project folder called *datasets*.
 Then, to apply the ISO standard annotation to iLISTEN corpus, you have to run the following command:
 ```bash
 python generate_iLISTEN2ISO.py
 ```   
-The new resource is saved in the *datasets* folder as **iLISTEN2ISO.json**. Furthermore, also the file **iLISTEN.json** is yielded with the same structure of iLISTEN2ISO. 
+The new resource is saved in the *datasets* folder as **iLISTEN2ISO.json**. Furthermore, also the file **iLISTEN.json** is yielded with the same structure of iLISTEN2ISO.
 
 ## Annotation structure
 The annotation is organized as follows:

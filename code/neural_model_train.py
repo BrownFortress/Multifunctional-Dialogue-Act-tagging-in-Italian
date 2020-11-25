@@ -5,6 +5,7 @@ from neural_models.cnn_model import DialogueActModelSC
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-dataset_name", help="specify the dataset name")
+parser.add_argument("-device", help="specify the device on which you want to run the NN", default="cuda:0")
 args = parser.parse_args()
 dataset_name = args.dataset_name
 # specify the dataset name
@@ -28,4 +29,4 @@ cnn_model = DialogueActModelSC()
 
 #s2scnn.manage(split, data, 128, 128, 256, 300, 0.001, n_epochs=300, dataset_name=dataset_name, device="cuda:0", clip=5, exp_name="cnn_hgru")
 
-cnn_model.manage(split, data, 128, 200, [1,2,3,4], 128, 300, 0.001, n_epochs=300, dataset_name=dataset_name, device="cuda:0", exp_name="cnn")
+cnn_model.manage(split, data, 128, 200, [1,2,3,4], 128, 300, 0.001, n_epochs=300, dataset_name=dataset_name, device=args.device, exp_name="cnn")

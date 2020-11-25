@@ -10,7 +10,8 @@ This repository contains a dialogue act tagger based on SVM and CNN model.
   - spacy Italian model (python -m spacy download it_core_news_sm)
 - FastText
   - FastText pretrained model (https://fasttext.cc/docs/en/pretrained-vectors.html)
-- (optional) plotly for charts
+  - Place the file **wiki.it.bin** inside the *preprocessing* folder
+- plotly for charts
 
 ### Getting Started
 #### Set up datasets
@@ -21,7 +22,7 @@ To train an SVM model run **svm_train.py**:
 python svm_train.py -dataset_name={dataset name such as iLISTEN2ISO} -speaker_to_keep= {U for user; S for system}
 ```
 If **-speaker_to_keep** is not specified the program will train two models for both U and S speakers.
-To test the traiend models run **svm_test.py**:
+To test the trained models run **svm_test.py**:
 ```bash
 python svm_test.py -dataset_name={dataset name such as iLISTEN2ISO} -model_system=path/to/model/trained/on/system/turns -model_user=path/to/model/trained/on/user/turns
 ```
