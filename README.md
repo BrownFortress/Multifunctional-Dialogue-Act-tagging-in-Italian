@@ -8,3 +8,13 @@ The task of Dialogue Act (DA) tagging, a crucial component in many conversationa
 - **paper**: Multifunctional ISO standard Dialogue Act tagging in Italian.pdf
 
 In order to run the code, you need the resources. Thus first visit the **resource** folder and then please go to the **code** folder.
+
+### Reference
+If you use this resource or this code in your research, please cite us:
+```
+@article{roccabruna2020multifunctional,
+  title={Multifunctional ISO standard Dialogue Act tagging in Italian},
+  author={Roccabruna, Gabriel and Cervone, Alessandra and Riccardi, Giuseppe},
+  year={2020}
+}
+```

@@ -50,11 +50,11 @@ class SVM_trainer():
         '''
         self.dataset_folder = "preprocessing/"
         self.standard_split_dataset_folder = "standard_splits/"
-    def remove_system_turns(self, split, split_ids, dataset_rep, speaker_to_keep):
-        print("Removing system turns")
+    def remove_speaker_turns(self, split, split_ids, dataset_rep, speaker_to_keep):
+        print("Removing speaker ",("USER" if speaker_to_keep == "S" else "SYSTEM")," turns")
         id_ba = 0
         to_del = []
-        # Remove system examples from training set
+        # Remove speaker examples from training set
         for d_id in split_ids["train_set"]:
             for s in dataset_rep["speakers"][d_id]:
                 if s != speaker_to_keep:
@@ -76,6 +76,7 @@ class SVM_trainer():
         for i in sorted(to_del, reverse=True):
             del split["test_set"]["examples"][i]
             del split["test_set"]["labels"][i]
+
     def hot_encode(self, to_convert, cipher):
         code = len(cipher.keys()) * [0]
         if type(to_convert) == list:
@@ -143,24 +144,17 @@ class SVM_trainer():
                         predictions.append(prediction)
                         prev_DA = prediction
             ScoreManager().save_results(representation, dataset_name, "svm",
-                 "final",true_labels, predictions, fold="final_version")
+                 "final",true_labels, predictions, fold="/")
             new_labels = [(x, predictions[ids]) for ids, x in enumerate(true_labels)]
+            '''
             ScoreManager().save_results(representation, dataset_name, "svm",
                  "error",user_utterances, new_labels, fold="Error")
-
-    def train_iteration(self, dataset, representation, c_values, test_settings, speaker_to_keep="U", official_split_flag = True, split_ids = None, fold = None):
+            '''
+    def train_iteration(self, dataset, representation, c_values, test_settings, speaker_to_keep="U", split_ids=None):
         dataset_name = dataset.split(".")[0].split("/")[-1]
         norm_selection = [False, True]
+
         dataset_rep = DataPreprocessing().preprocess(dataset, representation)
-
-        if official_split_flag:
-            split_ids = DatasetManager().get_official_split_ids(dataset_name, dataset_rep["we"])
-            split = DatasetManager().official_split(dataset_name, dataset_rep["we"], dataset_rep["enumerated_DA"])
-        elif split_ids == None:
-            split = self.split_training_test_set(dataset_rep["we"], dataset_rep["enumerated_DA"])
-        else:
-            split = DatasetManager().split_given_ids(dataset_rep["we"], dataset_rep["enumerated_DA"],  split_ids)
-
         models_f1s = []
         model_names = []
         for norm_flag in norm_selection:
@@ -180,9 +174,9 @@ class SVM_trainer():
 
                 if norm_flag:
                     features, _, _ = self.normalization(features)
-                if official_split_flag :
-                    split = DatasetManager().official_split(dataset_name, features, dataset_rep["enumerated_DA"])
-                    split_ids = DatasetManager().get_official_split_ids(dataset_name, features)
+
+                split = DatasetManager().official_split(dataset_name, features, dataset_rep["enumerated_DA"])
+                split_ids = DatasetManager().get_official_split_ids(dataset_name, features)
 
                 print("Features :", test_settings["name"][id])
                 print("Features vector dimension :", len(split["train_set"]["examples"][0]))
@@ -190,7 +184,7 @@ class SVM_trainer():
                 print("Selecting C")
 
                 if "ilisten" in dataset_name.lower():
-                    self.remove_system_turns(split, split_ids, dataset_rep, speaker_to_keep)
+                    self.remove_speaker_turns(split, split_ids, dataset_rep, speaker_to_keep)
                     print("Done")
                 micro_f1_score = []
                 precision_score = []
@@ -214,7 +208,6 @@ class SVM_trainer():
             context_flag=test_settings["settings"][id][3])
         mean = 0
         std = 0
-        print(len(features))
         if norm_flag:
             features, mean, std = self.normalization(features)
 
@@ -222,16 +215,14 @@ class SVM_trainer():
         split_ids = DatasetManager().get_official_split_ids(dataset_name, features)
 
         if "ilisten" in dataset_name.lower():
-            self.remove_system_turns(split, split_ids, dataset_rep, speaker_to_keep)
+            self.remove_speaker_turns(split, split_ids, dataset_rep, speaker_to_keep)
             print("Done")
         print("Training...")
-        accuracy, precision, best_model = self.train(C, split["train_set"]["examples"],
-            split["train_set"]["labels"] , split["test_set"]["examples"],
-            split["test_set"]["labels"], None)
 
-        pred = best_model.predict(split["test_set"]["examples"])
+        accuracy, precision, best_model = self.train(C, split["train_set"]["examples"], split["train_set"]["labels"] , split["test_set"]["examples"], split["test_set"]["labels"], None)
+
+
         true_labels = [dataset_rep["number_to_label"][x] for x in split["test_set"]["labels"]]
-        predictions = [dataset_rep["number_to_label"][x] for x in pred]
         model_state = {}
         model_state["model"] = best_model
         model_state["mean"] = mean
@@ -241,10 +232,11 @@ class SVM_trainer():
         model_state["dep_cipher"] = dataset_rep["dep_cipher"]
         model_state["da_cipher"] = dataset_rep["da_cipher"]
         model_state["number_to_label"] = dataset_rep["number_to_label"]
-
+        '''
         ScoreManager().save_results(representation, dataset_name, "svm",
              speaker_to_keep + "_" + test_settings["name"][id] + "_" + string1 +"_" + str(C),
             true_labels, predictions, fold = test_settings["name"][id] + "_" + string1)
+        '''
         self.save_model("svm_" + speaker_to_keep + "_"+ dataset_name + "_" + test_settings["name"][id].replace("+", "_") + ".npy", model_state)
         #ScoreManager().save_results_inspection(representation, dataset_name, "svm", test_settings["name"][id] + "_" + string1 +"_" + str(C),test_tokens,true_labels, predictions, fold = fold)
 
@@ -268,6 +260,7 @@ class SVM_trainer():
                 feature_row = np.append(feature_row, [1])
             else:
                 feature_row = np.append(feature_row, [0])
+
             if context_flag:
                 feature_row = np.concatenate([feature_row,  dataset["context"]], axis=0)
             if pos_tag:
@@ -328,7 +321,7 @@ class SVM_trainer():
                 all_data.append(np.asarray(row))
         mean = np.asarray(all_data).mean(axis=0)
         std = np.asarray(all_data).std(axis=0)
-        std = np.where(std==0, 1, std)
+        #std = np.where(std==0, 1, std)
         normalized_dataset = self.normalize_features(dataset, mean, std)
         return normalized_dataset, mean, std
 
@@ -344,11 +337,6 @@ class SVM_trainer():
         njobs  = -1
         clf = OneVsOneClassifier(LinearSVC(C=C, max_iter=1000), n_jobs= njobs)
         clf.fit(train_x, train_y)
-        if model_name != None:
-            if not os.path.exists("models/svm/"+ self.filename.split(".")[0]):
-                os.path.mkdir("models/svm/"+ self.filename.split(".")[0])
-            filename = "models/svm/" + self.filename.split(".")[0] + "/" + str(C) + "_" + model_name
-            pickle.dump(clf, open(filename, 'wb'))
         pred_y = clf.predict(test_x)
         # Score computing
         accuracy = accuracy_score(test_y, pred_y)

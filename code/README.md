@@ -6,14 +6,23 @@ This repository contains a dialogue act tagger based on SVM and CNN model.
 - python >= 3.6
 - sklearn >= 0.22
 - spacy >= 2.2.4
+ - spacy Italian model (python -m spacy download it_core_news_sm)
 - torch >= 1.5.0
-  - spacy Italian model (python -m spacy download it_core_news_sm)
 - FastText
   - FastText pretrained model (https://fasttext.cc/docs/en/pretrained-vectors.html)
-  - Place the file **wiki.it.bin** inside the *preprocessing* folder
-- plotly for charts
+  - Place the *wiki.it.bin* file inside the **preprocessing** folder
+- Plotly for charts
 
 ### Getting Started
+#### Get easily paper results  
+The models used to produce the results showed in the paper are saved in *models*. Also the preprocessing of the datasets are provided, thus for these experiments you do not need FastText *wiki.it.bin*. To run them and get the results, firstly get **iLISTEN** and **iLISTEN2ISO** datasets and copy them into the *datasets* folder. Then secondly run the .sh files (or copy&paste on a terminal their content):
+- **CNN models**
+  - cnn_iLISTEN.sh
+  - cnn_iLISTEN2ISO.sh
+- **SVM models**
+ - svm_iLISTEN.sh
+ - svm_iLISTEN2ISO.sh
+
 #### Set up datasets
 The first step is to copy in the "datasets/" folder the "iLISTEN.json" and "iLISTEN2ISO.json" datasets that can be obtained in the "resource/" folder.
 #### SVM model

@@ -23,235 +23,11 @@ class DataPreprocessing():
         self.word_r =  WordRepresentation()
         self.folder = "preprocessing/"
         self.dataset_folder = "datasets/"
-        self.decay = False
 
-    def __sub_preprocess_for_crf(self, data, output, representation_name, punctuation_flag=True):
-        pars = re.compile("'")
-        nlp = spacy.load("it_core_news_sm", disable = ["ner", "entity_linker", "sentecizer"])
-
-        for file_id, dialog in data["examples"].items():
-            output[file_id] = {}
-            output[file_id]["utterances"] = []
-            output[file_id]["labels"] = []
-            output[file_id]["pos"] = []
-            output[file_id]["dep"] = []
-            output[file_id]["we"] = []
-            output[file_id]["is_stop"] = []
-            output[file_id]["lemma"] = []
-            output[file_id]["is_alpha"] = []
-            output[file_id]["is_punct"] = []
-            for id, utterance in enumerate(dialog):
-                labels = data["labels"][file_id][id]
-                docs = nlp(" ".join(utterance).lower())
-                tmp_utterance = []
-                tmp_labels = []
-                tmp_pos = []
-                tmp_dep = []
-                tmp_we = []
-                tmp_lemma = []
-                tmp_is_stop = []
-                tmp_is_alpha = []
-                tmp_is_punct = []
-                word_embeddings = self.word_r.get_word_embeddings(utterance, representation_name)
-                word_id = 0
-                for token in docs:
-                    if (not token.is_punct or punctuation_flag) and token.text != "'":
-                    #if not token.is_punct:
-                        tmp_utterance.append(token.text.lower())
-                        tmp_we.append(word_embeddings[word_id])
-                        tmp_labels.append(labels[word_id])
-                        tmp_pos.append(token.pos_)
-                        tmp_dep.append(token.dep_)
-                        tmp_lemma.append(token.lemma_)
-                        tmp_is_stop.append(token.is_stop)
-                        tmp_is_alpha.append(token.is_alpha)
-                        tmp_is_punct.append(token.is_punct)
-                        word_id += 1
-                    elif token.text == "'":
-                        tmp_utterance[-1] += "'"
-                    #else:
-                        #tmp_utterance[-1] += token.text
-                output[file_id]["utterances"].append(tmp_utterance)
-                output[file_id]["labels"].append(tmp_labels)
-                output[file_id]["pos"].append(tmp_pos)
-                output[file_id]["dep"].append(tmp_dep)
-                output[file_id]["we"].append(tmp_we)
-                output[file_id]["is_stop"].append(tmp_is_stop)
-                output[file_id]["lemma"].append(tmp_lemma)
-                output[file_id]["is_alpha"].append(tmp_is_alpha)
-                output[file_id]["is_punct"].append(tmp_is_punct)
-
-    def segmentation_preprocessing(self, dataset_path, representation_name="fast_text"):
-        output = {}
-        output["examples"] = {}
-        output["labels"] = {}
-        dataset_name = dataset_path.split("/")[-1].split(".")[0]
-        with open(dataset_path, "r") as f:
-            dataset = json.loads(f.read())
-
-        nlp = spacy.load("it_core_news_sm", disable=["tagger", "parser", "ner","textcat",  "entity_linker", "sentecizer"])
-
-        most_da = self.most_common_dialogue_acts(dataset, 80)
-        for da_id, turns in dataset.items():
-            output["examples"][da_id] = []
-            output["labels"][da_id] = []
-            for turn_id, turn in turns.items():
-                utterance = []
-                labels = []
-                for segment in turn:
-                    if segment["speaker"] != "S":
-                        seq = nlp(segment["FU"])
-                        lenght = 0
-                        for w in seq:
-                            if w.text != "'":
-                                utterance.append(w.text)
-                                lenght += 1
-                            else:
-                                utterance[-1] = utterance[-1] + "'"
-
-                        da = ""
-                        if segment["DA"] in most_da or "ilisten" == dataset_name:
-                            da = segment["DA"]
-                        else:
-                            da = "other"
-                        labels.extend(["B_" + da] + (lenght-1) * ["I_" + da])
-
-                if len(utterance) > 0:
-                    output["examples"][da_id].append(utterance)
-                    output["labels"][da_id].append(labels)
-
-        return self.preprocess_for_crf(output, dataset_name, representation_name=representation_name)
 
     def load_data(self, dataset_name):
         with open(self.dataset_folder+dataset_name, "r") as f:
             return json.loads(f.read())
-
-    def segment(self, labels, utterance):
-        indexes = [id_l  for id_l, lab in enumerate(labels) if "B_" in lab ]
-        segments = []
-        das = []
-        if len(indexes) == 0:
-            segments = [" ".join(utterance)]
-            das = ["_".join(labels[0].split("_")[1:])]
-        else:
-            for pos, index in enumerate(indexes):
-                if pos == len(indexes)-1:
-                    segments.append(" ".join(utterance[index:len(utterance)]))
-                else:
-                    segments.append(" ".join(utterance[index:indexes[pos+1]]))
-                das.append("_".join(labels[index].split("_")[1:]))
-        return segments, das
-    # Preprocess a well formed file containing a list of utterances
-    def preprocess_for_crf_file(self, dataset_path, we_flag=False):
-        data = {}
-        with open(dataset_path, "r") as f:
-            data = json.loads(f.read())
-        output = {}
-        nlp = spacy.load("it_core_news_sm", disable = ["ner", "entity_linker", "sentecizer"])
-        for da_id, dialog in data.items():
-            output[da_id] = {}
-            output[da_id]["utterances"] = []
-            output[da_id]["labels"] = []
-            output[da_id]["pos"] = []
-            output[da_id]["dep"] = []
-            output[da_id]["we"] = []
-            output[da_id]["is_stop"] = []
-            output[da_id]["lemma"] = []
-            output[da_id]["is_alpha"] = []
-            output[da_id]["is_punct"] = []
-            output[da_id]["turns_id"] = []
-            for turn_id, turn in dialog.items():
-                docs = nlp(turn["FU"])
-                tmp_utterance = []
-                tmp_pos = []
-                tmp_dep = []
-                tmp_we = []
-                tmp_lemma = []
-                tmp_is_stop = []
-                tmp_is_alpha = []
-                tmp_is_punct = []
-                if we_flag:
-                    word_embeddings = self.word_r.get_word_embeddings([token.text for token in docs], "fast_text")
-                word_id = 0
-                for token in docs:
-                    if token.text != "'":
-                        tmp_utterance.append(token.text.lower())
-                        if we_flag:
-                            tmp_we.append(word_embeddings[word_id])
-                        tmp_pos.append(token.pos_)
-                        tmp_dep.append(token.dep_)
-                        tmp_lemma.append(token.lemma_)
-                        tmp_is_stop.append(token.is_stop)
-                        tmp_is_alpha.append(token.is_alpha)
-                        tmp_is_punct.append(token.is_punct)
-                        word_id += 1
-                    elif token.text == "'":
-                        tmp_utterance[-1] += "'"
-
-                output[da_id]["utterances"].append(tmp_utterance)
-                output[da_id]["pos"].append(tmp_pos)
-                output[da_id]["dep"].append(tmp_dep)
-                output[da_id]["we"].append(tmp_we)
-                output[da_id]["is_stop"].append(tmp_is_stop)
-                output[da_id]["lemma"].append(tmp_lemma)
-                output[da_id]["is_alpha"].append(tmp_is_alpha)
-                output[da_id]["is_punct"].append(tmp_is_punct)
-                output[da_id]["turns_id"].append(turn_id)
-        return output
-    def preprocess_for_crf(self, corpus, data_name, representation_name = "None", punctuation_flag=True):
-        # Lowering text
-        # Extracting POS, DEP
-        if path.exists(self.folder + representation_name + "_prep_" + data_name + "_for_crf"+ ".npy"):
-            print("Loading : " + self.folder + representation_name + "_prep_" + data_name + "_for_crf" + ".npy" + " ...")
-            return self.load(data_name + "_for_crf", representation_name)
-
-        clean_corpus = {}
-        self.__sub_preprocess_for_crf(corpus, clean_corpus, representation_name, punctuation_flag)
-
-        self.save(data_name + "_for_crf", clean_corpus, representation_name)
-        return clean_corpus
-
-    def get_utterance_for_crf(self, utterance,representation_name= "fast_text"):
-        nlp = spacy.load("it_core_news_sm")
-        pars = re.compile("'")
-        result = {}
-        result["utterance"] = []
-        result["pos"] = []
-        result["dep"] = []
-        result["we"] = []
-        result["is_stop"] = []
-        result["lemma"] = []
-        result["is_alpha"] = []
-        docs = nlp(utterance)
-        cleaned_utterance = [token.text.lower() for token in docs]
-        word_embeddings = self.word_r.get_word_embeddings(cleaned_utterance, representation_name)
-        for id_w, token in enumerate(docs):
-            if not token.is_punct:
-                result["utterance"].append(token.text.lower())
-                result["pos"].append(token.tag_)
-                result["dep"].append(token.dep_)
-                result["we"].append(word_embeddings[id_w])
-                result["is_stop"].append(token.is_stop)
-                result["lemma"].append(token.lemma_)
-                result["is_alpha"].append(token.is_alpha)
-        return result
-
-    def load_dataset(self, filename):
-        utterances = []
-        dialogue_acts = []
-        prev_dialogue_acts = []
-        segments= []
-        dialogue_id = []
-        with open(filename) as fp:
-            for line in fp:
-                tokens = line.split(",")
-                utterances.append(tokens[0].lower())
-                dialogue_acts.append(tokens[1])
-                prev_dialogue_acts.append(tokens[2])
-                segments.append(int(tokens[3]))
-                #if tokens[4] not in dialogue_id:
-                dialogue_id.append(tokens[4].strip())
-        return utterances, dialogue_acts, prev_dialogue_acts, segments, dialogue_id
 
 
     def order_dict(self, dictionary, reverse =True):
@@ -268,6 +44,7 @@ class DataPreprocessing():
             if (v / float(common_divisor) * 100) > cut_off:
                 res[k] = round(v /common_divisor, 3) * 100
         return res
+
     def most_common_dialogue_acts(self, dataset, coverage):
         dialogue_acts = []
         for dia_id, dialogue in dataset.items():
@@ -347,7 +124,10 @@ class DataPreprocessing():
             result["dep_tags"][dia_id] = []
             result["speakers"][dia_id] = []
             for turn_id, turn in dialogue.items():
+
+
                 doc = nlp_inst(" ".join([x["FU"] for x in turn]))
+
                 # Remove punctuation
                 #doc_tmp = [x  for x in doc if not x.is_punct]
                 #doc = doc_tmp
@@ -368,14 +148,10 @@ class DataPreprocessing():
                     #print(lower_bound, upper_bound)
                     #print([w.text for w in doc[lower_bound:upper_bound]])
                     da = ""
-                    if len(doc[lower_bound:upper_bound]) == 0:
-                        print(doc)
-                        print(lower_bound, upper_bound)
-                        print(turn_id, "  ", seg_id)
-                        a = 0/0
+
 
                     # Cut the tail
-                    if seg["DA"] in most_common_da or "ilisten" == fname:
+                    if seg["DA"] in most_common_da or "ilisten" == fname.lower():
                         da = seg["DA"]
                     else:
                         da = "other2"

@@ -1,6 +1,6 @@
 from dataset_manager.data_preprocessing import DataPreprocessing
 from dataset_manager.dataset_manager import DatasetManager
-from neural_models.seq2seq_cnn import DialogueActModelCNN
+
 from neural_models.cnn_model import DialogueActModelSC
 import argparse
 parser = argparse.ArgumentParser()
@@ -24,11 +24,10 @@ split = DatasetManager().split_given_ids_for_nn(dataset, split_ids)
 print("Let's test begins")
 
 model_manger = DialogueActModelSC()
-#model_manger = DialogueActModelCNN()
 
 number_of_labels = len(data["label_to_number"].keys())
 #specify model parameters
 #model, checkpoint = model_manger.load_model("models/"+model_name, 128, 128, 300, number_of_labels) # seq2seq case
 #model_manger.testing(split["test_set"], model, data, dataset_name, exp_name="soft_attention_w6_best_macro_")
 model, checkpoint = model_manger.load_model("models/"+model_name, 200, [1,2,3,4], 128, 300) # cnn_model case
-model_manger.testing(split["test_set"], model, data, checkpoint, dataset_name, exp_name="experiment name")
+model_manger.testing(split["test_set"], model, data, checkpoint, dataset_name, exp_name="")

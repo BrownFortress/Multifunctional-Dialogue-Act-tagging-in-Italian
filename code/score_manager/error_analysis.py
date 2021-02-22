@@ -6,8 +6,7 @@ import os
 from collections import Counter
 import sys
 import json
-from dataset_manager.data_preprocessing import DataPreprocessing
-from dataset_manager.dataset_analysis import DatasetAnalysis
+
 import pprint
 
 class ErrorAnalysis():
@@ -15,7 +14,6 @@ class ErrorAnalysis():
         self.labels = None
         self.dataset_name = None
         self.labels_in_test_set = None
-        print(dataset_path)
         if dataset_path != None and representation != None:
             if "/" in dataset_path:
                 self.dataset_name = dataset_path.split("/")[-1]

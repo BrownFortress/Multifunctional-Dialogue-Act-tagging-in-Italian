@@ -7,7 +7,15 @@ import json
 from dataset_manager.dataset_analysis import DatasetAnalysis
 if sys.version_info[0] == 3:
     from score_manager.error_analysis import ErrorAnalysis
-
+class bcolor:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 class ScoreManager():
     def __init__(self,):
         self.result_folder = "results/"
@@ -74,28 +82,23 @@ class ScoreManager():
         best_file_acc = ""
         best_accuracy = 0
         best_f1 = 0
-        for folder in sorted(os.listdir(route_path)):
-            for file in os.listdir(route_path + "/" + folder):
-                print(file.upper())
-                code = eval.evaluation(route_path + "/" + folder + "/" + file)
-                accuracy, f1 = eval.compute_scores(code)
-                print("Micro F1: ", accuracy)
-                print("Macro F1: ", f1)
-                if accuracy > best_accuracy:
-                    path_acc = route_path + "/" + folder + "/" + file
-                    best_file1 = file
-                    best_accuracy = accuracy
-                if f1 > best_f1:
-                    path_f1 = route_path + "/" + folder + "/" + file
-                    best_file2 = file
-                    best_f1 = f1
-                    #print(file, " Accuracy: ", accuracy)
-                best_accuracies.append(best_accuracy)
-                best_f1s.append(best_f1)
-
-        print("Best experiment: ", best_file_acc, " Micro F1: ", best_accuracy)
-        print("Best experiment: ", best_file_f1, " MAcro F1: ", best_f1)
+        #for file in sorted(os.listdir(route_path)):
+        for file in os.listdir(route_path):
+            code = eval.evaluation(route_path + "/" + file)
+            accuracy, f1 = eval.compute_scores(code)
+            if accuracy > best_accuracy:
+                path_acc = route_path + "/" + file
+                best_file1 = file
+                best_accuracy = accuracy
+            if f1 > best_f1:
+                path_f1 = route_path + "/"  + file
+                best_file2 = file
+                best_f1 = f1
+                #print(file, " Accuracy: ", accuracy)
+            best_accuracies.append(best_accuracy)
+            best_f1s.append(best_f1)
+        print(bcolor.BOLD, bcolor.OKGREEN, "Results:", bcolor.ENDC)
+        print(bcolor.BOLD, "Micro F1: ", best_accuracy, bcolor.ENDC)
+        print(bcolor.BOLD ,"Macro F1: ", best_f1, bcolor.ENDC)
 
         return eval, path_f1, path_acc
-
-    

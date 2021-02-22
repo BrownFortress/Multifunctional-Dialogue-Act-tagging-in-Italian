@@ -22,9 +22,10 @@ elif args.speaker_to_keep == "S":
 else:
     speakers = ["U"]
 
+svm = SVM_trainer()
+
 for speaker in speakers:
     rep = ["fast_text"]
-
     c_values = [0.01, 0.1, 0.2, 0.005]
     test_settings = {}
     #test_settings["settings"] = [[PREV_DA, POS_tags, DEP_tags, Context]]
@@ -52,7 +53,7 @@ for speaker in speakers:
                                      [True, True, False, False], # PREV_DA+POS
                                      [True, False, True, False], # PREV_DA+DEP
                                      [True, False, False, True], # PREV_DA+Context
-                                     [False, True, True, True], # ALL
+                                     [True, True, True, True], # ALL
                                      [True, False, False, False], # PREV_DA
                                      [False, False, False, True], # Context
                                      [False, False, False, False] # WE
@@ -71,7 +72,5 @@ for speaker in speakers:
         "Only Word Embedding"
         ]
 
-    svm = SVM_trainer()
-
-    svm.train_iteration(dataset, "fast_text", c_values, test_settings, official_split_flag = True, fold="exp_" + str(datetime.now()), speaker_to_keep=speaker)
+    svm.train_iteration(dataset, "fast_text", c_values, test_settings, speaker_to_keep=speaker)
     print("Model for speaker: ", speaker, " trained !")

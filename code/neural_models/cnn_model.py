@@ -15,6 +15,7 @@ import random
 import sys
 import time
 import json
+
 # Sentence encoder using CNN
 class EncoderCNN(nn.Module):
     def __init__(self, embedding_dim, n_filters, filter_sizes, output_dim,
@@ -29,7 +30,6 @@ class EncoderCNN(nn.Module):
         self.fc = nn.Linear(len(filter_sizes) * n_filters, output_dim)
         #self.output_dim = output_dim
         self.output_dim = len(filter_sizes) * n_filters
-
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, input):
@@ -60,7 +60,6 @@ class BiGRUFusion(nn.Module):
 
         self.linear_layer = nn.Linear(first_layer_encoder.output_dim , first_layer_encoder.output_dim)
         #self.out_layer = nn.Linear(first_layer_encoder.output_dim, output_size)
-        self.joined_layer = nn.Linear(first_layer_encoder.output_dim + input_encoder.output_dim, input_encoder.output_dim)
         self.out_layer = nn.Linear(input_encoder.output_dim + 30, output_size)
         self.system_predictor = nn.Linear(self.encoder_layer1.output_dim, system_output_size)
         self.embedding = nn.Embedding(20, 30)
@@ -75,21 +74,6 @@ class BiGRUFusion(nn.Module):
         trg_len = trg.shape[0]
         trg_vocab_size = self.output_size
         #tensor to store decoder outputs
-        '''
-        if "cuda" in self.device:
-            outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
-            utterance_representations = torch.Tensor().to(self.device)
-        else:
-            outputs = torch.zeros(trg_len, batch_size, trg_vocab_size)
-            utterance_representations = torch.Tensor
-        '''
-        #encoder_outputs is all hidden states of the input sequence, back and forwards
-        #hidden is the final forward and backward hidden states, passed through a linear layer
-        # Compute the sentence embedding for each sentence
-        #for turn_id, turn in enumerate(src):
-            #if turn_id != 0 and turn_id != len(src) - 1 and turn_id != len(src) - 2:
-                #utterance_rep = self.encoder_layer1(turn).unsqueeze(0)
-                #utterance_representations = torch.cat((utterance_representations, utterance_rep))
 
         # Window encoding
         to_classify = self.input_encoder(src[-2])
@@ -97,20 +81,13 @@ class BiGRUFusion(nn.Module):
         sys_da_prediction = torch.softmax(self.system_predictor(system_enc), dim=1)
         pred_sys_da = sys_da_prediction.argmax(1)
         prev_da = self.dropout(self.embedding(pred_sys_da))
-
-        to_classify = torch.relu(self.joined_layer(torch.cat((to_classify, system_enc), dim=1)))
         features = torch.cat((to_classify, prev_da), dim=1)
         out = self.out_layer(self.dropout(features))
+        #output = out
         output = self.softmax(out)
         return output, sys_da_prediction
 
 def init_weights(mat):
-    #for name, param in mat.named_parameters():
-        #if 'weight' in name:
-            #nn.init.normal_(param.data, mean=0, std=0.01)
-        #else:
-            #nn.init.constant_(param.data, 0)
-
     for m in mat.modules():
         if type(m) in [nn.GRU, nn.LSTM, nn.RNN]:
             for name, param in m.named_parameters():
@@ -160,7 +137,6 @@ class DialogueActModelSC():
         model = BiGRUFusion(encoder, input_encoder, number_of_labels, sys_number_of_labels, device).to(device)
         optimizer = optim.Adam(model.parameters(), lr=lr)
         criterion = nn.CrossEntropyLoss()
-        sys_critetion = nn.CrossEntropyLoss()
         if model_to_load == None:
             model.apply(init_weights)
         else:
@@ -179,7 +155,7 @@ class DialogueActModelSC():
         f1s_test = []
         f1s_train = []
         #print(model)
-
+        data_name = dataset_name.split(".")[0]
 
         exp_name +=  "_epochs_" + str(n_epochs)
         mean_losses_train = []
@@ -188,8 +164,9 @@ class DialogueActModelSC():
             # Gets batches return a list of batches, while padding batches add pads to windows in that batch. The padding in this phased is applied at token level only.
             train_iterator = DatasetManager().padding_batches_of_windows(self.get_batches(dataset["train_set"], batch_size), data)
             test_iterator = DatasetManager().padding_batches_of_windows(self.get_test_batches(dataset["validation_set"], batch_size), data)
-            accuracy_train, f1_train, losses_train, ground_true_train, predictions_train = self.train(model, train_iterator, optimizer, criterion, sys_critetion, device, mapping, sys_mapping)
-            accuracy_test, f1_test, losses_test, ground_true_test, predictions_test = self.evaluate(model, test_iterator, criterion, sys_critetion, device, mapping, sys_mapping)
+            accuracy_train, f1_train, losses_train, ground_true_train, predictions_train = self.train(model, train_iterator, optimizer, criterion, device, mapping, sys_mapping)
+            accuracy_test, f1_test, losses_test, ground_true_test, predictions_test = self.evaluate(model, test_iterator, criterion,  device, mapping, sys_mapping)
+            '''
             if accuracy_test > best_valid_accuracy: # If the model achieved the best f1 score than it is saved.
                 best_valid_accuracy = accuracy_test
                 model.train()
@@ -201,7 +178,7 @@ class DialogueActModelSC():
                         'number_to_label': number_to_label
                         }
                 torch.save(state, "models/"+dataset_name+ "_" + exp_name +"_cnn_model-model_"+str(lr)+".pt")
-
+            '''
             if f1_train > best_valid_F1: # If the model achieved the best f1 score than it is saved.
                 best_valid_F1 = f1_train
                 model.train()
@@ -212,7 +189,8 @@ class DialogueActModelSC():
                         'sys_mapping': sys_mapping,
                         'number_to_label': number_to_label
                         }
-                torch.save(state, "models/"+dataset_name+ "_" + exp_name +"_cnn_model-model_"+str(lr)+"_F1.pt")
+
+                torch.save(state, "models/" + data_name + "_" + exp_name +"_cnn_"+str(lr)+".pt")
             #all_losses.append(np.asarray(losses).mean())
 
             accuracies_train.append(accuracy_train)
@@ -281,7 +259,7 @@ class DialogueActModelSC():
             pos_tags = [dataset["pos_tags"][ids] for ids in range(start, len(dataset["examples"]))]
             batches.append({"examples":src, "labels":trg, "speakers":speakers, "pos_tags": pos_tags})
         return batches
-    def train(self, model, iterator, optimizer, criterion, sys_critetion, device, mapping, sys_mapping):
+    def train(self, model, iterator, optimizer, criterion,device, mapping, sys_mapping):
         model.train()
         epoch_loss = 0
         n_samples = len(iterator) * len(iterator[0]["examples"])
@@ -327,7 +305,7 @@ class DialogueActModelSC():
             # Accuracy is measured only on the last example, so outputs[-2] beacuse at -1 there is the eos token
 
             loss1 = criterion(output_tmp, trg_tmp)
-            loss2 = sys_critetion(sys_out_tmp, sys_trg_tmp)
+            loss2 = criterion(sys_out_tmp, sys_trg_tmp)
             loss = (loss1 + loss2)/2
 
             losses.append(loss.item())
@@ -341,6 +319,7 @@ class DialogueActModelSC():
             ground_true.extend(trg_tmp.cpu().detach().numpy().tolist())
             correct += float((predicted == trg_tmp).sum())
 
+
         eval = ErrorAnalysis()
         code = eval.evaluation({"ground_true": ground_true, "predictions": predictions})
         accuracy, f1 = eval.compute_scores(code)
@@ -351,12 +330,15 @@ class DialogueActModelSC():
         checkpoint = torch.load(model_path, map_location="cuda:0")
         number_of_labels = len(checkpoint["mapping"].keys())
         sys_number_of_labels = len(checkpoint["sys_mapping"].keys())
-        print(checkpoint.keys())
         encoder = EncoderCNN(input_size, filter_dim, filter_sizes, output_size*2)
         input_encoder = EncoderCNN(input_size, filter_dim, filter_sizes, output_size*2)
         model = BiGRUFusion(encoder, input_encoder, number_of_labels, sys_number_of_labels, "cuda:0").to("cuda:0")
+        to_load = {}
+        for name, prm in checkpoint['state_dict'].items():
+            if name in model.state_dict():
+                to_load[name] = prm
 
-        model.load_state_dict(checkpoint['state_dict'])
+        model.load_state_dict(to_load)
         return model, checkpoint
 
     def testing(self, test_set, model, data, checkpoint, dataset_name, exp_name=None ):
@@ -384,9 +366,9 @@ class DialogueActModelSC():
         assert len(predictions) == len(ground_true)
         predictions = [number_to_label[l] for l in predictions]
         ground_true = [number_to_label[l] for l in ground_true]
-        ScoreManager().save_results("fast_text", dataset_name, "cnn_model", "test_set_"+ exp_name + ".json", ground_true, predictions)
+        ScoreManager().save_results("fast_text", dataset_name, "cnn", "test_set_"+ exp_name + ".json", ground_true, predictions)
 
-    def evaluate(self, model, iterator, criterion, sys_critetion, device, mapping, sys_mapping):
+    def evaluate(self, model, iterator, criterion, device, mapping, sys_mapping):
         model.eval()
         epoch_loss = 0
         n_samples = len(iterator) * len(iterator[0]["examples"])
@@ -424,7 +406,7 @@ class DialogueActModelSC():
                 # Accuracy is measured only on the last example, so outputs[-2] beacuse at -1 there is the eos token
 
                 loss1 = criterion(output_tmp, trg_tmp)
-                loss2 = sys_critetion(sys_out_tmp, sys_trg_tmp)
+                loss2 = criterion(sys_out_tmp, sys_trg_tmp)
                 loss = (loss1 + loss2)/2
                 losses.append(loss.item())
                 predicted = output.argmax(1)
