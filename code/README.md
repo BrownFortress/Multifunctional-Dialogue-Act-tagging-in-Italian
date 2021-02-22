@@ -20,8 +20,8 @@ The models used to produce the results showed in the paper are saved in *models*
   - cnn_iLISTEN.sh
   - cnn_iLISTEN2ISO.sh
 - **SVM models**
- - svm_iLISTEN.sh
- - svm_iLISTEN2ISO.sh
+  - svm_iLISTEN.sh
+  - svm_iLISTEN2ISO.sh
 
 #### Set up datasets
 The first step is to copy in the "datasets/" folder the "iLISTEN.json" and "iLISTEN2ISO.json" datasets that can be obtained in the "resource/" folder.
